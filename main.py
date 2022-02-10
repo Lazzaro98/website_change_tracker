@@ -7,7 +7,7 @@ import webbrowser
 from datetime import datetime
 from urllib.request import Request, urlopen
 
-USAGE = 'usage: website_change_tracker.py [-h] [-receiver_email=test@test.com]\n\t\t\t\t\t\t\t\t\t[-sender_email=test2@test.com] [-sender_password=password]\n\t\t\t\t\t\t\t\t\t[-youtube_song_url=youtube.com/test]\n\t\t\t\t\t\t\t\t\t[-repeat_check_time=TIME_IN_SECONDS]\n\t\t\t\t\t\t\t\t\tURL'
+USAGE = 'usage: website_change_tracker.py URL [-h] [-receiver_email=test@test.com]\n\t\t\t\t[-sender_email=test2@test.com] [-sender_password=password]\n\t\t\t\t[-youtube_song_url=youtube.com/test]\n\t\t\t\t[-repeat_check_time=TIME_IN_SECONDS]\n\t\t\t\t[-looking_for=STRING_TO_FIND]'
 # set these values if you want to be notified by email when the change is detected
 RECEIVER_EMAIL = ''
 SENDER_PASSWORD = ''
@@ -17,7 +17,9 @@ YOUTUBE_SONG_URL = ''
 # set the value of the website you want to track
 URL = ''
 # set the repeat time for checks (5minutes default)
-REPEAT_CHECK_TIME = 5 * 60
+REPEAT_CHECK_TIME = 5
+# If you want to detect if certain string appeared on the website, set this value
+LOOKING_FOR = ''
 
 
 # In order to allow less secure logins on your email account
@@ -44,7 +46,7 @@ def play_song(song_youtube_url=YOUTUBE_SONG_URL):
     webbrowser.open(song_youtube_url)
 
 
-def track_website_changes(url_=URL, repeat_time=REPEAT_CHECK_TIME):
+def track_website_changes(url_=URL, repeat_time=REPEAT_CHECK_TIME, looking_for=LOOKING_FOR):
     url = Request(url_, headers={'User-Agent': 'Mozilla/5.0'})
 
     response = urlopen(url).read()
@@ -57,10 +59,18 @@ def track_website_changes(url_=URL, repeat_time=REPEAT_CHECK_TIME):
             current_hash = hashlib.sha224(response).hexdigest()
 
             if current_hash != previous_hash:
-                on_change()
+                if looking_for != '':
+                    if looking_for in str(response):
+                        on_found()
+                else:
+                    on_change()
             previous_hash = current_hash
         except Exception as e:
             print("Error: " + e)
+
+
+def on_found():  # if you detect special string appeared on the website
+    on_change()  # Signal whatever you want
 
 
 def on_change():  # What do you want to do after you detected a change. Sending email and opening certain webpage available for now
@@ -85,6 +95,7 @@ def load_args():
     global SENDER_PASSWORD
     global YOUTUBE_SONG_URL
     global REPEAT_CHECK_TIME
+    global LOOKING_FOR
 
     if len(sys.argv) < 2:
         print("Type URL which you want to track for changes.")
@@ -106,6 +117,8 @@ def load_args():
             YOUTUBE_SONG_URL = s.rsplit('youtube_song_url=', 1)[-1]
         elif 'repeat_check_time' in s:
             REPEAT_CHECK_TIME = s.rsplit('-repeat_check_time=', 1)[-1]
+        elif 'looking_for' in s:
+            LOOKING_FOR = s.rsplit('-looking_for=', 1)[-1]
 
 
 if __name__ == '__main__':
