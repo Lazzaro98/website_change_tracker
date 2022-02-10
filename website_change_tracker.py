@@ -17,7 +17,7 @@ YOUTUBE_SONG_URL = ''
 # set the value of the website you want to track
 URL = ''
 # set the repeat time for checks (5minutes default)
-REPEAT_CHECK_TIME = 5
+REPEAT_CHECK_TIME = 5 * 60
 # If you want to detect if certain string appeared on the website, set this value
 LOOKING_FOR = ''
 
